@@ -1,0 +1,166 @@
+<html ng-app="timeline">
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.9/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.3.6/svg.min.js"></script>
+    <script src="http://otm.github.io/svg.path.js/svg.path.js"></script>
+    <script src="timeline.js"></script>
+    <title>relational timeline</title>
+    <style>
+      body, html {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        padding: 0;
+        margin: 0;
+        font-family: tahoma;
+      }
+
+      #controls * {
+        vertical-align: middle;
+      }
+
+      #controls {
+        background-color: #fafafa;
+        border: 1px solid #ccc;
+        padding: 5px;
+        margin: 5px 5px 0 5px;
+        font-size: 0.75em;
+      }
+
+      #controls input[type="range"] {
+        width: 50px;
+        margin-right: 10px;
+      }
+
+      #controls input[type="checkbox"] {
+        margin-left: 10px;
+      }
+
+      #daterange {
+        position: absolute;
+        font-size: 0.75em;
+        padding: 5px;
+        margin-top: 10px;
+        margin-left: 10px;
+      }
+    </style>
+    <script>
+      var app = angular.module('timeline', []);
+
+      app.controller('MainCtrl', function($scope) {
+        $scope.config = {
+          min_date: '2016-01-01',
+          max_date: '2016-01-15',
+          overlap: true,
+          curved: true,
+          colored_arcs: true,
+          arc_opacity: 0.3,
+          circle_opacity: 0.9,
+          event_label_opacity: 0.75,
+          ticks: 'week'
+        }
+
+        $scope.timeline = {
+          'nodes': [
+            {'id': 'People', 'type': 'space'},
+            {'id': 'Petter', 'type': 'Person'},
+            {'id': 'Karl', 'type': 'Person'},
+            {'id': 'Websites', 'type': 'space'},
+            {'id': 'stresser.no', 'type': 'nettside'},
+            {'id': 'dummy.xyz', 'type': 'nettside'},
+            {'id': 'Bank accounts', 'type': 'space'},
+            {'id': '4321.01.54321', 'type': 'Bank.acc.'},
+            {'id': '1234.10.12345', 'type': 'Bank.acc.'},
+          ],
+          'types': ['Chat', 'Wire transfer', 'Victim of DDoS', 'Visits website', 'Other'],
+          'events': [
+              {'type': 'Other', 'timestamp': '2016-01-03 00:00', 'source': 'Petter', 'label': 'Gets fired from dummy.xyz'},
+              {'type': 'Visits website', 'timestamp': '2016-01-06 00:00', 'source': 'Karl', 'target': 'stresser.no'},
+              {'type': 'Chat', 'timestamp': '2016-01-04 12:00', 'source': 'Petter', 'target': 'Karl', 'label': '"How much for a DDoS attack?"'},
+              {'type': 'Chat', 'timestamp': '2016-01-04 16:00', 'source': 'Karl', 'target': 'Petter', 'label': '"$100"', 'legen_dir': 'down'},
+              {'type': 'Chat', 'timestamp': '2016-01-05 12:00', 'source': 'Petter', 'target': 'Karl', 'label': '"Ok, start DDoS"'},
+              {'type': 'Visits website', 'timestamp': '2016-01-05 16:00', 'end': '2016-01-10 00:00', 'source': 'Petter', 'label': 'Petter regularly visits dummy.xyz'},
+              {'type': 'Chat', 'timestamp': '2016-01-06 04:00', 'source': 'Karl', 'target': 'Petter', 'label': '"DDoS started"', 'legen_dir': 'down'},
+              {'type': 'Chat', 'timestamp': '2016-01-10 02:00', 'source': 'Petter', 'target': 'Karl', 'label': '"Stop the DDoS attack"'},
+              {'type': 'Victim of DDoS', 'timestamp': '2016-01-06', 'end': '2016-01-11 00:00', 'source': 'dummy.xyz'},
+              {'type': 'Visits website', 'timestamp': '2016-01-11 00:00', 'source': 'Karl', 'target': 'stresser.no'},
+              {'type': 'Chat', 'timestamp': '2016-01-11 04:00', 'source': 'Karl', 'target': 'Petter', 'label': '"Attack stopped, that\'ll be $100."'},
+              {'type': 'Wire transfer', 'timestamp': '2016-01-12 00:00', 'source': '1234.10.12345', 'target': '4321.01.54321', 'label': '"$100 thanks for your service."'},
+          ]
+        }
+      });
+
+      app.directive('controls', function() {
+        return {
+          restrict: 'E',
+          replace: true,
+          scope: {
+            controlslayout: '=',
+            config: '='
+          },
+          template: '<div id="controls">'
+            + 'Date range:'
+            + '<input type="text" ng-model="config.min_date" size="12" /> - <input type="text" ng-model="config.max_date" size="12" />'
+            + ' | '
+            + 'Edge opacity: <input type="range" min="0" max="1" step="0.1" ng-model="config.arc_opacity" />'
+            + 'Label opacity: <input type="range" min="0" max="1" step="0.1" ng-model="config.event_label_opacity" />'
+            + '<input type="checkbox" ng-model="config.curved" id="curved" /> <label for="curved">Curved edges</label>'
+            + '<input type="checkbox" ng-model="config.colored_arcs" id="colored" /> <label for="colored">Colored edges</label>'
+            + '<input type="checkbox" ng-model="config.overlap" id="overlap" /> <label for="overlap">Overlapping types</label>'
+            + ' | '
+            + 'Ticks:'
+            + '<select ng-model="config.ticks">'
+            +   '<option value="day">day</option>'
+            +   '<option value="week">week</option>'
+            +   '<option value="month">month</option>'
+            + '</select>'
+          + '</div>',
+        link: function(scope) {
+
+        }
+      }});
+
+      app.directive('timeline', function() {
+
+        return {
+          restrict: 'E',
+          template :'<div>'
+          +  '<controls config="config"></controls>'
+          +  '<div id="timeline"></div>'
+          + '</div>',
+          replace: true,
+          scope: {
+            timeline: '=',
+            config: '='
+          },
+          link: function(scope) {
+            var draw = function() {
+              if (!scope.timeline) return;
+              if(isNaN(new Date(scope.config.max_date).getTime())
+              || isNaN(new Date(scope.config.max_date).getTime())) return;
+
+              document.getElementById('timeline').innerHTML = '';
+               timeline.create('timeline')
+                  .config(scope.config)
+                  .types(scope.timeline.types)
+                  .nodes(scope.timeline.nodes)
+                  .events(scope.timeline.events)
+                  .ticks();
+              };
+
+            scope.$watch('timeline', function() {
+              draw();
+            });
+
+            scope.$watch('config', function() {
+              draw();
+            }, true);
+          }
+        }
+      });
+    </script>
+  </head>
+  <body ng-controller="MainCtrl">
+    <timeline timeline="timeline" config="config" ></timeline>
+  </body>
+</html>
