@@ -272,7 +272,7 @@ var timeline = (function() {
   return {
     create: create,
     nodes: nodes,
-    types: types,
+    event_types: event_types,
     ticks: ticks,
     events: events,
     config: set_config
